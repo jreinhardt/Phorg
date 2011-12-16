@@ -1,3 +1,10 @@
+#!/usr/bin/env python
+
+# Baustellen:
+# - Filterzeugs
+# - Liste sinnvoll
+# - Code-Struktur
+
 import pygtk
 pygtk.require("2.0")
 import gtk
@@ -5,37 +12,51 @@ import sys
 import os
 import EXIF
 
-win = gtk.Window()
 
-entry = gtk.Entry()
+class MainWindow(gtk.Window):
+	"""
+	Main window of the application.
+	"""
 
-files = gtk.ListStore(str,int,str)
+
+	def __init__(self):
+		gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
+	
+		self.store = None
+		self._create_gui()
+
+
+	def _create_gui(self):
+		box = gtk.VBox()
+
+		# Create filter text box
+		entry = gtk.Entry()
+		box.add(entry)
+
+		# Create view
+		self.store = gtk.ListStore(str,int,str)
+		view = gtk.TreeView(self.store)
+		view.set_headers_visible(True)
+		renderer = gtk.CellRendererText()
+		view.append_column(gtk.TreeViewColumn("Filename",renderer,text=0))
+		view.append_column(gtk.TreeViewColumn("Filesize",renderer,text=1))
+		view.append_column(gtk.TreeViewColumn("Date",renderer,text=2))
+		box.add(view)
+
+		self.add(box)
+
+
+
+win = MainWindow()
 
 dircontent = map(lambda x: os.path.join(os.getcwd(),"pics",x),os.listdir("pics"))
 
 for f in dircontent:
 	fid = open(f)
 	tags = EXIF.process_file(fid)
-	files.append((os.path.split(f)[1],os.stat(f).st_size,tags["EXIF DateTimeOriginal"]))
-
-renderer = gtk.CellRendererText()
-
-view = gtk.TreeView(files)
-view.set_headers_visible(True)
-view.append_column(gtk.TreeViewColumn("Filename",renderer,text=0))
-view.append_column(gtk.TreeViewColumn("Filesize",renderer,text=1))
-view.append_column(gtk.TreeViewColumn("Date",renderer,text=2))
-
-box = gtk.VBox()
-
-box.add(entry)
-box.add(view)
-
-win.add(box)
+	win.store.append((os.path.split(f)[1],os.stat(f).st_size,tags["EXIF DateTimeOriginal"]))
 
 win.show_all()
-
-	
 
 gtk.main()
 
