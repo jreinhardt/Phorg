@@ -13,6 +13,11 @@ import os
 import EXIF
 
 
+# Command to execute when a file is double-clicked in the list view. The
+# filename of the selected image is given as an argument.
+cmd = 'eog'
+
+
 # Original list of all files. We need to store this so that we can select
 # a subset of it via the filtering mechanism.
 files = []
@@ -43,6 +48,7 @@ class MainWindow(gtk.Window):
 		# Create view
 		self.store = gtk.ListStore(str,int,str)
 		view = gtk.TreeView(self.store)
+		view.connect("row-activated", self._view_row_activated)
 		view.set_headers_visible(True)
 		renderer = gtk.CellRendererText()
 		view.append_column(gtk.TreeViewColumn("Filename",renderer,text=0))
@@ -64,6 +70,12 @@ class MainWindow(gtk.Window):
 		for x in result:
 			self.store.append(x)
 
+
+	def _view_row_activated(self, view, path, column):
+		import subprocess
+		iter = self.store.get_iter(path)
+		filename = self.store.get_value(iter, 0)
+		subprocess.Popen([cmd, os.path.join(os.getcwd(), "pics", filename)])
 
 
 
