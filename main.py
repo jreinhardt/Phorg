@@ -12,19 +12,10 @@ import sys
 import os
 import EXIF
 
-class FilterEntry(gtk.Entry):
-	"""
-	Entry bar for entering filter queries.
-	"""
 
-	def __init__(self):
-		gtk.Entry.__init__(self)
-		# 'activate' is triggered when user presses ENTER
-		self.connect("activate", self.on_activate)
-
-
-	def on_activate(self, widget):
-		print "ACTIVATE:", self.get_text()
+# Original list of all files. We need to store this so that we can select
+# a subset of it via the filtering mechanism.
+files = []
 
 
 class MainWindow(gtk.Window):
@@ -43,7 +34,8 @@ class MainWindow(gtk.Window):
 		box = gtk.VBox()
 
 		# Create filter text box
-		entry = FilterEntry()
+		entry = gtk.Entry()
+		entry.connect("activate", self._entry_activate)
 		box.add(entry)
 
 		# Create view
@@ -58,17 +50,35 @@ class MainWindow(gtk.Window):
 
 		self.add(box)
 
+	def _entry_activate(self, widget):
+		from filter import filter
+		query = widget.get_text()
+		try:
+			result = filter(files, query)
+		except ValueError:
+			# Invalid query
+			return
+		self.store.clear()
+		for x in result:
+			self.store.append(x)
+
 
 
 
 win = MainWindow()
 
-dircontent = map(lambda x: os.path.join(os.getcwd(),"pics",x),os.listdir("pics"))
+# Load all pictures from the "pics" directory
+filenames = os.listdir("pics")
+files = []
+for fn in filenames:
+	full = os.path.join("pics", fn)
+	with open(full) as fid:
+		tags = EXIF.process_file(fid)
+	files.append((fn, os.stat(full).st_size, tags["EXIF DateTimeOriginal"]))
 
-for f in dircontent:
-	fid = open(f)
-	tags = EXIF.process_file(fid)
-	win.store.append((os.path.split(f)[1],os.stat(f).st_size,tags["EXIF DateTimeOriginal"]))
+# Fill list store
+for f in files:
+	win.store.append(f)
 
 win.show_all()
 
