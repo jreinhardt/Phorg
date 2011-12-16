@@ -10,6 +10,7 @@ pygtk.require("2.0")
 import gtk
 import sys
 import os
+import EXIF
 
 class FilterEntry(gtk.Entry):
 	"""
@@ -46,14 +47,13 @@ class MainWindow(gtk.Window):
 		box.add(entry)
 
 		# Create view
-		self.store = gtk.ListStore(str,int)
+		self.store = gtk.ListStore(str,int,str)
 		view = gtk.TreeView(self.store)
 		view.set_headers_visible(True)
 		renderer = gtk.CellRendererText()
-		col1 = gtk.TreeViewColumn("Palim",renderer,text=0)
-		col2 = gtk.TreeViewColumn("Ketchup",renderer,text=1)
-		view.append_column(col1)
-		view.append_column(col2)
+		view.append_column(gtk.TreeViewColumn("Filename",renderer,text=0))
+		view.append_column(gtk.TreeViewColumn("Filesize",renderer,text=1))
+		view.append_column(gtk.TreeViewColumn("Date",renderer,text=2))
 		box.add(view)
 
 		self.add(box)
@@ -63,9 +63,12 @@ class MainWindow(gtk.Window):
 
 win = MainWindow()
 
-dircontent = os.listdir(os.getcwd())
+dircontent = map(lambda x: os.path.join(os.getcwd(),"pics",x),os.listdir("pics"))
+
 for f in dircontent:
-	win.store.append((f,os.stat(f).st_size))
+	fid = open(f)
+	tags = EXIF.process_file(fid)
+	win.store.append((os.path.split(f)[1],os.stat(f).st_size,tags["EXIF DateTimeOriginal"]))
 
 win.show_all()
 
