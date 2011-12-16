@@ -3,26 +3,28 @@ pygtk.require("2.0")
 import gtk
 import sys
 import os
+import EXIF
 
 win = gtk.Window()
 
 entry = gtk.Entry()
 
-files = gtk.ListStore(str,int)
+files = gtk.ListStore(str,int,str)
 
-dircontent = os.listdir(os.getcwd())
+dircontent = map(lambda x: os.path.join(os.getcwd(),"pics",x),os.listdir("pics"))
 
 for f in dircontent:
-	files.append((f,os.stat(f).st_size))
+	fid = open(f)
+	tags = EXIF.process_file(fid)
+	files.append((os.path.split(f)[1],os.stat(f).st_size,tags["EXIF DateTimeOriginal"]))
 
 renderer = gtk.CellRendererText()
 
 view = gtk.TreeView(files)
 view.set_headers_visible(True)
-col1 = gtk.TreeViewColumn("Palim",renderer,text=0)
-col2 = gtk.TreeViewColumn("Ketchup",renderer,text=1)
-view.append_column(col1)
-view.append_column(col2)
+view.append_column(gtk.TreeViewColumn("Filename",renderer,text=0))
+view.append_column(gtk.TreeViewColumn("Filesize",renderer,text=1))
+view.append_column(gtk.TreeViewColumn("Date",renderer,text=2))
 
 box = gtk.VBox()
 
