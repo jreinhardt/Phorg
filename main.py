@@ -31,6 +31,8 @@ class MainWindow(gtk.Window):
 
 
 	def _create_gui(self):
+		self.connect("destroy", lambda w: gtk.main_quit())
+
 		box = gtk.VBox()
 
 		# Create filter text box
