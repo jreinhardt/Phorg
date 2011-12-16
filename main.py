@@ -19,8 +19,8 @@ renderer = gtk.CellRendererText()
 
 view = gtk.TreeView(files)
 view.set_headers_visible(True)
-col1 = gtk.TreeViewColumn("Eimer",renderer,text=0)
-col2 = gtk.TreeViewColumn("Reimer",renderer,text=1)
+col1 = gtk.TreeViewColumn("Runter",renderer,text=0)
+col2 = gtk.TreeViewColumn("Palunter",renderer,text=1)
 view.append_column(col1)
 view.append_column(col2)
 
