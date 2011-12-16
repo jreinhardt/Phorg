@@ -33,11 +33,20 @@ class Tags:
 		return [x[1] for x in dbarray]
 
 
+# Command to execute when a file is double-clicked in the list view. The
+# filename of the selected image is given as an argument.
+cmd = 'eog'
+
+
+# Original list of all files. We need to store this so that we can select
+# a subset of it via the filtering mechanism.
+files = []
+
+
 class MainWindow(gtk.Window):
 	"""
 	Main window of the application.
 	"""
-
 
 	def __init__(self):
 		gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
@@ -47,15 +56,19 @@ class MainWindow(gtk.Window):
 
 
 	def _create_gui(self):
+		self.connect("destroy", lambda w: gtk.main_quit())
+
 		box = gtk.VBox()
 
 		# Create filter text box
 		entry = gtk.Entry()
+		entry.connect("activate", self._entry_activate)
 		box.add(entry)
 
 		# Create view
 		self.store = gtk.ListStore(str,int,str,str)
 		view = gtk.TreeView(self.store)
+		view.connect("row-activated", self._view_row_activated)
 		view.set_headers_visible(True)
 		renderer = gtk.CellRendererText()
 		view.append_column(gtk.TreeViewColumn("Filename",renderer,text=0))
@@ -66,19 +79,43 @@ class MainWindow(gtk.Window):
 
 		self.add(box)
 
+	def _entry_activate(self, widget):
+		from filter import filter
+		query = widget.get_text()
+		try:
+			result = filter(files, query)
+		except ValueError:
+			# Invalid query
+			return
+		self.store.clear()
+		for x in result:
+			self.store.append(x)
+
+
+	def _view_row_activated(self, view, path, column):
+		import subprocess
+		iter = self.store.get_iter(path)
+		filename = self.store.get_value(iter, 0)
+		subprocess.Popen([cmd, os.path.join(os.getcwd(), "pics", filename)])
+
 
 
 win = MainWindow()
 
-dircontent = map(lambda x: os.path.join(os.getcwd(),"pics",x),os.listdir("pics"))
-
 tags = Tags()
+# Load all pictures from the "pics" directory
+filenames = os.listdir("pics")
+files = []
+for fn in filenames:
+	full = os.path.join(os.getcwd(), "pics", fn)
+	t = ", ".join(tags.get_tags(full))
+	with open(full) as fid:
+		exif = EXIF.process_file(fid)
+	files.append((fn, os.stat(full).st_size, exif["EXIF DateTimeOriginal"],t))
 
-for f in dircontent:
-	fid = open(f)
-	exif = EXIF.process_file(fid)
-	t = ", ".join(tags.get_tags(f))
-	win.store.append((os.path.split(f)[1],os.stat(f).st_size,exif["EXIF DateTimeOriginal"],t))
+# Fill list store
+for f in files:
+	win.store.append(f)
 
 win.show_all()
 
