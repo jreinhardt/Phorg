@@ -11,12 +11,25 @@ import gtk
 import sys
 import os
 
+class FilterEntry(gtk.Entry):
+	"""
+	Entry bar for entering filter queries.
+	"""
+
+	def __init__(self):
+		gtk.Entry.__init__(self)
+		# 'activate' is triggered when user presses ENTER
+		self.connect("activate", self.on_activate)
+
+
+	def on_activate(self, widget):
+		print "ACTIVATE:", self.get_text()
+
 
 class MainWindow(gtk.Window):
 	"""
 	Main window of the application.
 	"""
-
 
 	def __init__(self):
 		gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
@@ -29,7 +42,7 @@ class MainWindow(gtk.Window):
 		box = gtk.VBox()
 
 		# Create filter text box
-		entry = gtk.Entry()
+		entry = FilterEntry()
 		box.add(entry)
 
 		# Create view
@@ -44,6 +57,7 @@ class MainWindow(gtk.Window):
 		box.add(view)
 
 		self.add(box)
+
 
 
 
