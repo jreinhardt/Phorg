@@ -5,32 +5,15 @@
 # - Liste sinnvoll
 # - Code-Struktur
 
+import sys
+import os
+
 import pygtk
 pygtk.require("2.0")
 import gtk
-import sys
-import os
-import EXIF
-import dbus
-from dbus.mainloop.glib import DBusGMainLoop
 
-class Tags:
-	def __init__(self):
-		DBusGMainLoop(set_as_default=True)
-		self.bus = dbus.SessionBus()
+from image import Image
 
-		self.res_proxy = self.bus.get_object("org.freedesktop.Tracker1",
-			"/org/freedesktop/Tracker1/Resources")
-		self.res_interface = dbus.Interface(self.res_proxy,"org.freedesktop.Tracker1.Resources")
-
-	def get_tags(self,path):
-		dbarray = self.res_interface.SparqlQuery("""SELECT ?tags ?labels
-			WHERE {
-				?f nie:isStoredAs ?as ; nao:hasTag ?tags .
-				?as nie:url 'file://%s' .
-				?tags a nao:Tag ; nao:prefLabel ?labels .
-			}""" % path)
-		return [x[1] for x in dbarray]
 
 
 # Command to execute when a file is double-clicked in the list view. The
@@ -38,9 +21,9 @@ class Tags:
 cmd = 'eog'
 
 
-# Original list of all files. We need to store this so that we can select
+# Original list of all images. We need to store this so that we can select
 # a subset of it via the filtering mechanism.
-files = []
+images = []
 
 
 class MainWindow(gtk.Window):
@@ -83,13 +66,12 @@ class MainWindow(gtk.Window):
 		from filter import filter
 		query = widget.get_text()
 		try:
-			result = filter(files, query)
+			result = filter(images, query)
 		except ValueError:
 			# Invalid query
 			return
 		self.store.clear()
-		for x in result:
-			self.store.append(x)
+		self.add_images(result)
 
 
 	def _view_row_activated(self, view, path, column):
@@ -99,23 +81,25 @@ class MainWindow(gtk.Window):
 		subprocess.Popen([cmd, os.path.join(os.getcwd(), "pics", filename)])
 
 
+	def add_images(self, lst):
+		"""
+		Add a list of images to the list store.
+		"""
+		for img in lst:
+			t = ", ".join(img.tags)
+			d = img.exif['EXIF DateTimeOriginal']
+			self.store.append((img.filename, img.size, d, t))
+
 
 win = MainWindow()
 
-tags = Tags()
 # Load all pictures from the "pics" directory
 filenames = os.listdir("pics")
-files = []
+images = []
 for fn in filenames:
 	full = os.path.join(os.getcwd(), "pics", fn)
-	t = ", ".join(tags.get_tags(full))
-	with open(full) as fid:
-		exif = EXIF.process_file(fid)
-	files.append((fn, os.stat(full).st_size, exif["EXIF DateTimeOriginal"],t))
-
-# Fill list store
-for f in files:
-	win.store.append(f)
+	images.append(Image(full))
+win.add_images(images)
 
 win.show_all()
 
