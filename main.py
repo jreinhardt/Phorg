@@ -44,9 +44,14 @@ class MainWindow(gtk.Window):
 		box = gtk.VBox()
 
 		# Create filter text box
+		filterbar = gtk.HBox()
 		entry = gtk.Entry()
 		entry.connect("activate", self._entry_activate)
-		box.add(entry)
+		filterbar.add(entry)
+		button = gtk.Button(stock=gtk.STOCK_CLEAR)
+		button.connect("clicked", self._filter_cleared)
+		filterbar.add(button)
+		box.pack_start(filterbar,expand=False,fill=False)
 
 		# Create view
 		self.store = gtk.ListStore(str,int,str,str)
@@ -58,7 +63,7 @@ class MainWindow(gtk.Window):
 		view.append_column(gtk.TreeViewColumn("Filesize",renderer,text=1))
 		view.append_column(gtk.TreeViewColumn("Date",renderer,text=2))
 		view.append_column(gtk.TreeViewColumn("Tags",renderer,text=3))
-		box.add(view)
+		box.pack_start(view)
 
 		self.add(box)
 
@@ -89,6 +94,11 @@ class MainWindow(gtk.Window):
 			t = ", ".join(img.tags)
 			d = img.exif['EXIF DateTimeOriginal']
 			self.store.append((img.filename, img.size, d, t))
+
+
+	def _filter_cleared(self, button):
+		self.store.clear()
+		self.add_images(images)
 
 
 win = MainWindow()

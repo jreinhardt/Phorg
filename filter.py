@@ -16,5 +16,5 @@ def filter(lst, string):
 
 	# We now simply assume that each list item is a tuple and that its size
 	# is given in its second field.
-	return [x for x in lst if x[1] <= max_size]
+	return [x for x in lst if x.size <= max_size]
 
