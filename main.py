@@ -70,10 +70,10 @@ class MainWindow(gtk.Window):
 		self.add(box)
 
 	def _entry_activate(self, widget):
-		from filter import filter
-		query = widget.get_text()
+		from filter import Query
+		query = Query(widget.get_text())
 		try:
-			result = filter(images, query)
+			result = query.filter(images)
 		except ValueError:
 			# Invalid query
 			return
