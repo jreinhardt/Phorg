@@ -61,9 +61,14 @@ class MainWindow(gtk.Window):
 		box = gtk.VBox()
 
 		# Create filter text box
+		filterbar = gtk.HBox()
 		entry = gtk.Entry()
 		entry.connect("activate", self._entry_activate)
-		box.add(entry)
+		filterbar.add(entry)
+		button = gtk.Button(stock=gtk.STOCK_CLEAR)
+		button.connect("clicked", self._filter_cleared)
+		filterbar.add(button)
+		box.pack_start(filterbar,expand=False,fill=False)
 
 		# Create view
 		self.store = gtk.ListStore(str,int,str,str)
@@ -75,7 +80,7 @@ class MainWindow(gtk.Window):
 		view.append_column(gtk.TreeViewColumn("Filesize",renderer,text=1))
 		view.append_column(gtk.TreeViewColumn("Date",renderer,text=2))
 		view.append_column(gtk.TreeViewColumn("Tags",renderer,text=3))
-		box.add(view)
+		box.pack_start(view)
 
 		self.add(box)
 
@@ -97,6 +102,12 @@ class MainWindow(gtk.Window):
 		iter = self.store.get_iter(path)
 		filename = self.store.get_value(iter, 0)
 		subprocess.Popen([cmd, os.path.join(os.getcwd(), "pics", filename)])
+
+
+	def _filter_cleared(self,button):
+		for x in files:
+			self.store.append(x)
+		
 
 
 
