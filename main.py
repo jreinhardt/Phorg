@@ -51,10 +51,10 @@ class MainWindow(gtk.Window):
 		button = gtk.Button(stock=gtk.STOCK_CLEAR)
 		button.connect("clicked", self._filter_cleared)
 		filterbar.add(button)
-		box.pack_start(filterbar,expand=False,fill=False)
+		box.pack_start(filterbar, expand=False, fill=False)
 
 		# Create view
-		self.store = gtk.ListStore(str,int,str,str)
+		self.store = gtk.ListStore(str, int, str, str)
 		view = gtk.TreeView(self.store)
 		view.connect("row-activated", self._view_row_activated)
 		view.set_headers_visible(True)
@@ -65,7 +65,10 @@ class MainWindow(gtk.Window):
 			col.set_resizable(True)
 			col.set_sort_column_id(idx)
 			view.append_column(col)
-		box.pack_start(view)
+		scroll = gtk.ScrolledWindow()
+		scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+		scroll.add(view)
+		box.pack_start(scroll)
 
 		self.add(box)
 
