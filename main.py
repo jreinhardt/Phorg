@@ -7,12 +7,14 @@
 
 import sys
 import os
+import urllib2
 
 import pygtk
 pygtk.require("2.0")
 import gtk
 
 from image import Image
+import tracker
 
 
 
@@ -88,7 +90,7 @@ class MainWindow(gtk.Window):
 		import subprocess
 		iter = self.store.get_iter(path)
 		filename = self.store.get_value(iter, 0)
-		subprocess.Popen([cmd, os.path.join(os.getcwd(), "pics", filename)])
+		subprocess.Popen([cmd, filename])
 
 
 	def add_images(self, lst):
@@ -96,8 +98,8 @@ class MainWindow(gtk.Window):
 		Add a list of images to the list store.
 		"""
 		for img in lst:
-			t = ", ".join(img.tags)
-			d = img.exif['EXIF DateTimeOriginal']
+			t = " ".join(img.tags)
+			d = " " #img.exif['EXIF DateTimeOriginal']
 			self.store.append((img.filename, img.size, d, t))
 
 
@@ -107,14 +109,44 @@ class MainWindow(gtk.Window):
 		self.add_images(images)
 
 
+def find_images(path):
+	"""
+	Recursively find all images in a given directory.
+
+	Returns a list of the filenames of the images.
+	"""
+	images = []
+	for dirpath, dirnames, filenames in os.walk(path):
+		for fn in filenames:
+			if os.path.splitext(fn)[1].lower() in ['.jpg', '.jpeg', '.png', '.gif']:
+				images.append(os.path.join(dirpath, fn))
+	return images
+
+
+def get_images_from_tracker():
+	query = """
+SELECT ?url WHERE {
+	?x a nfo:Image.
+	?x nie:url ?url.
+}
+	"""
+	result = tracker.query(query)
+	return [urllib2.unquote(str(x[0]))[7:] for x in result]
+
+
 win = MainWindow()
 
 # Load all pictures from the "pics" directory
-filenames = os.listdir("pics")
+print "Looking for images..."
+#filenames = find_images(os.getcwd())
+filenames = get_images_from_tracker()
+print "Found %d images." % len(filenames)
 images = []
+print "Loading image information..."
 for fn in filenames:
-	full = os.path.join(os.getcwd(), "pics", fn)
-	images.append(Image(full))
+	images.append(Image(fn))
+print "Done loading image information."
+
 win.add_images(images)
 
 win.show_all()
