@@ -45,9 +45,9 @@ class MainWindow(gtk.Window):
 
 		# Create filter text box
 		filterbar = gtk.HBox()
-		entry = gtk.Entry()
-		entry.connect("activate", self._entry_activate)
-		filterbar.add(entry)
+		self.entry = gtk.Entry()
+		self.entry.connect("activate", self._entry_activate)
+		filterbar.add(self.entry)
 		button = gtk.Button(stock=gtk.STOCK_CLEAR)
 		button.connect("clicked", self._filter_cleared)
 		filterbar.add(button)
@@ -59,10 +59,12 @@ class MainWindow(gtk.Window):
 		view.connect("row-activated", self._view_row_activated)
 		view.set_headers_visible(True)
 		renderer = gtk.CellRendererText()
-		view.append_column(gtk.TreeViewColumn("Filename",renderer,text=0))
-		view.append_column(gtk.TreeViewColumn("Filesize",renderer,text=1))
-		view.append_column(gtk.TreeViewColumn("Date",renderer,text=2))
-		view.append_column(gtk.TreeViewColumn("Tags",renderer,text=3))
+		column_titles = ["Filename", "Filesize", "Date","Tags"]
+		for title,idx in zip(column_titles,range(len(column_titles))):
+			col = gtk.TreeViewColumn(title,renderer,text=idx)
+			col.set_resizable(True)
+			col.set_sort_column_id(idx)
+			view.append_column(col)
 		box.pack_start(view)
 
 		self.add(box)
@@ -97,6 +99,7 @@ class MainWindow(gtk.Window):
 
 
 	def _filter_cleared(self, button):
+		self.entry.set_text("")
 		self.store.clear()
 		self.add_images(images)
 
