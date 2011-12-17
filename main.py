@@ -59,10 +59,11 @@ class MainWindow(gtk.Window):
 		view.connect("row-activated", self._view_row_activated)
 		view.set_headers_visible(True)
 		renderer = gtk.CellRendererText()
-		view.append_column(gtk.TreeViewColumn("Filename",renderer,text=0))
-		view.append_column(gtk.TreeViewColumn("Filesize",renderer,text=1))
-		view.append_column(gtk.TreeViewColumn("Date",renderer,text=2))
-		view.append_column(gtk.TreeViewColumn("Tags",renderer,text=3))
+		column_titles = ["Filename", "Filesize", "Date","Tags"]
+		for title,idx in zip(column_titles,range(len(column_titles))):
+			col = gtk.TreeViewColumn(title,renderer,text=idx)
+			col.set_resizable(True)
+			view.append_column(col)
 		box.pack_start(view)
 
 		self.add(box)
