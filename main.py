@@ -63,6 +63,7 @@ class MainWindow(gtk.Window):
 		for title,idx in zip(column_titles,range(len(column_titles))):
 			col = gtk.TreeViewColumn(title,renderer,text=idx)
 			col.set_resizable(True)
+			col.set_sort_column_id(idx)
 			view.append_column(col)
 		box.pack_start(view)
 
