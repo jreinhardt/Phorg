@@ -45,9 +45,9 @@ class MainWindow(gtk.Window):
 
 		# Create filter text box
 		filterbar = gtk.HBox()
-		entry = gtk.Entry()
-		entry.connect("activate", self._entry_activate)
-		filterbar.add(entry)
+		self.entry = gtk.Entry()
+		self.entry.connect("activate", self._entry_activate)
+		filterbar.add(self.entry)
 		button = gtk.Button(stock=gtk.STOCK_CLEAR)
 		button.connect("clicked", self._filter_cleared)
 		filterbar.add(button)
@@ -97,6 +97,7 @@ class MainWindow(gtk.Window):
 
 
 	def _filter_cleared(self, button):
+		self.entry.set_text("")
 		self.store.clear()
 		self.add_images(images)
 
