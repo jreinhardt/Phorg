@@ -28,6 +28,7 @@ cmd = 'eog'
 images = []
 
 
+
 class MainWindow(gtk.Window):
 	"""
 	Main window of the application.
@@ -98,9 +99,11 @@ class MainWindow(gtk.Window):
 		Add a list of images to the list store.
 		"""
 		for img in lst:
-			t = " ".join(img.tags)
-			d = " " #img.exif['EXIF DateTimeOriginal']
-			self.store.append((img.filename, img.size, d, t))
+			tags = " ".join(img.get_tags())
+			date = img.get_date()
+			filename = img.get_filename()
+			
+			self.store.append((filename, 1, date, tags))
 
 
 	def _filter_cleared(self, button):
@@ -131,7 +134,7 @@ SELECT ?url WHERE {
 }
 	"""
 	result = tracker.query(query)
-	return [urllib2.unquote(str(x[0]))[7:] for x in result]
+	return [str(x[0]) for x in result]
 
 
 win = MainWindow()
@@ -148,6 +151,7 @@ for fn in filenames:
 print "Done loading image information."
 
 win.add_images(images)
+
 
 win.show_all()
 
