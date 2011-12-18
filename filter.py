@@ -116,11 +116,11 @@ class Query:
 			if len(tokens) < 2:
 				raise ValueError("Incomplete query: Expected two more tokens after '%s'." % var)
 			if var == 'size':
-				self.terms.append(NumericalTerm(lambda img: img.get_size(), tokens.pop(), tokens.pop()))
+				self.terms.append(NumericalTerm(lambda img: img.size, tokens.pop(), tokens.pop()))
 			elif var == 'filename':
 				self.terms.append(StringTerm(lambda img: img.get_filename(), tokens.pop(), tokens.pop()))
 			elif var == 'tags':
-				self.terms.append(StringTerm(lambda img: ' '.join(img.get_tags()), tokens.pop(), tokens.pop()))
+				self.terms.append(StringTerm(lambda img: ' '.join(img.tags), tokens.pop(), tokens.pop()))
 			else:
 				raise ValueError("Unknown variable name '%s'." % var)
 

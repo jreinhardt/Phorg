@@ -13,7 +13,7 @@ import pygtk
 pygtk.require("2.0")
 import gtk
 
-from image import Image
+from image import Image, Images
 import tracker
 
 
@@ -100,14 +100,9 @@ class MainWindow(gtk.Window):
 		Add a list of images to the list store.
 		"""
 		for img in lst:
-			tags = " ".join(img.get_tags())
-			try:
-				date = img.get_date()
-			except Exception:
-				date = ''
+			tags = " ".join(img.tags)
 			filename = img.get_filename()
-			
-			self.store.append((filename, img.get_size(), date, tags))
+			self.store.append((filename, img.size, img.date, tags))
 
 
 	def _filter_cleared(self, button):
@@ -116,47 +111,9 @@ class MainWindow(gtk.Window):
 		self.add_images(images)
 
 
-def find_images(path):
-	"""
-	Recursively find all images in a given directory.
-
-	Returns a list of the filenames of the images.
-	"""
-	images = []
-	for dirpath, dirnames, filenames in os.walk(path):
-		for fn in filenames:
-			if os.path.splitext(fn)[1].lower() in ['.jpg', '.jpeg', '.png', '.gif']:
-				images.append(os.path.join(dirpath, fn))
-	return images
-
-
-def get_images_from_tracker():
-	query = """
-SELECT ?url WHERE {
-	?x a nfo:Image.
-	?x nie:url ?url.
-}
-	"""
-	result = tracker.query(query)
-	return [str(x[0]) for x in result]
-
-
 win = MainWindow()
-
-# Load all pictures from the "pics" directory
-print "Looking for images..."
-#filenames = find_images(os.getcwd())
-filenames = get_images_from_tracker()
-print "Found %d images." % len(filenames)
-images = []
-print "Loading image information..."
-for fn in filenames:
-	images.append(Image(fn))
-print "Done loading image information."
-
+images = Images()
 win.add_images(images)
-
-
 win.show_all()
 
 gtk.main()

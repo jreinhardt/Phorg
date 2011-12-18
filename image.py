@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
 import os
-import tracker
 import urllib2
+
+import gobject
+
+import tracker
 
 
 def _escape(str):
@@ -10,47 +13,70 @@ def _escape(str):
 
 class Image:
 
-	def __init__(self, url):
+	def __init__(self, url, tags=None, date=None, size=None):
 		self.url = url
-		self.tags = ""
-		self.size = 0
-		self.filename = ""
+		self.size = size
+		self.date = date
 
+		if tags is not None:
+			self.tags = tags
+		else:
+			self.tags = []
 
-	def get_tags(self):
-		query = """
-SELECT ?labels WHERE {
-	?f nie:url '%s'.
-	?f nao:hasTag ?tags.
-	?tags a nao:Tag;
-		nao:prefLabel ?labels.
-}
-		""" % _escape(self.url)
-		dbarray = tracker.query(query)
-		return [x[0] for x in dbarray]
-
-
-	def get_date(self):
-		query = """
-SELECT ?date
-WHERE {
-	?f nie:url '%s' .
-	?f nie:contentCreated ?date .
-}
-		""" % _escape(self.url)
-
-		dbarray = tracker.query(query)
-		return str(dbarray[0][0])
 
 	def get_filename(self):
 		return urllib2.unquote(self.url)[7:]
 
-	def get_size(self):
+
+
+# The 'Images' class should ideally behave like a list, but we also need to
+# subclass GObject because we want to use custom signals. However, multiple
+# inheritance in that case is not possible ("multiple bases have instance
+# lay-out conflict"). Hence we implement the necessary portions of the list
+# interface manually.
+
+class Images(gobject.GObject):
+
+	def __init__(self):
+		gobject.GObject.__init__(self)
+
+		self._images = []
 		query = """
-SELECT ?size WHERE {
-	?x nie:url '%s';
+SELECT
+	?url
+	tracker:coalesce(?date1, ?date2, ?date3, '')
+	?size
+	(
+		SELECT GROUP_CONCAT(nao:prefLabel(?tag), ' ')
+		WHERE {
+			?img nao:hasTag ?tag.
+		}
+	)
+WHERE {
+	?img a nfo:Image;
+		nie:url ?url;
 		nfo:fileSize ?size.
+
+	OPTIONAL { ?img nie:contentCreated ?date1 }
+	OPTIONAL { ?img nie:created ?date2 }
+	OPTIONAL { ?img nfo:fileLastModified ?date3 }
 }
-		""" % _escape(self.url)
-		dbarray = tracker.query(query)
-		return int(dbarray[0][0])
+		"""
+		for r in tracker.query(query):
+			url = str(r[0])
+			date = str(r[1])
+			size = int(r[2])
+			tags = str(r[3]).split(' ')
+			self._images.append(Image(url, tags=tags, date=date, size=size))
+
+
+	def __getitem__(self, index):
+		return self._images[index]
+
+
+	def __len__(self):
+		return len(self._images)
+
+
+	def __iter__(self):
+		return iter(self._images)

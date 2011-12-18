@@ -6,12 +6,19 @@ from dbus.mainloop.glib import DBusGMainLoop
 # Initialize DBUS
 DBusGMainLoop(set_as_default=True)
 _bus = dbus.SessionBus()
-_res_proxy = _bus.get_object(
+_proxy = _bus.get_object(
 	"org.freedesktop.Tracker1",
 	"/org/freedesktop/Tracker1/Resources"
 )
-_res_interface = dbus.Interface(_res_proxy,"org.freedesktop.Tracker1.Resources")
+_interface = dbus.Interface(_proxy, "org.freedesktop.Tracker1.Resources")
 
 
 def query(string):
-	return _res_interface.SparqlQuery(string)
+	return _interface.SparqlQuery(string)
+
+
+def register_update_listener(listener):
+	# Note: It seems the GraphUpdated signal is only sent by Tracker >= 0.9.x
+	_proxy.connect_to_signal('GraphUpdated', listener)
+
+
