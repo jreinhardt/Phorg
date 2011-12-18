@@ -41,6 +41,7 @@ class MainWindow(gtk.Window):
 
 
 	def _create_gui(self):
+		self.set_default_size(400, 400)
 		self.connect("destroy", lambda w: gtk.main_quit())
 
 		box = gtk.VBox()
