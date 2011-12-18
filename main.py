@@ -101,10 +101,13 @@ class MainWindow(gtk.Window):
 		"""
 		for img in lst:
 			tags = " ".join(img.get_tags())
-			date = img.get_date()
+			try:
+				date = img.get_date()
+			except Exception:
+				date = ''
 			filename = img.get_filename()
 			
-			self.store.append((filename, 1, date, tags))
+			self.store.append((filename, img.get_size(), date, tags))
 
 
 	def _filter_cleared(self, button):
