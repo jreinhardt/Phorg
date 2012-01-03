@@ -14,6 +14,7 @@ pygtk.require("2.0")
 import gtk
 
 from image import Image, Images
+from tag import TagDialog
 import tracker
 
 
@@ -26,7 +27,6 @@ cmd = 'eog'
 # Original list of all images. We need to store this so that we can select
 # a subset of it via the filtering mechanism.
 images = []
-
 
 
 class MainWindow(gtk.Window):
@@ -61,7 +61,11 @@ class MainWindow(gtk.Window):
 		self.store = gtk.ListStore(str, int, str, str)
 		view = gtk.TreeView(self.store)
 		view.connect("row-activated", self._view_row_activated)
+		view.connect("key-press-event", self._key_pressed)
 		view.set_headers_visible(True)
+		view.set_enable_search(False)
+		#The tag dialog is not ready for this:
+		#view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
 		renderer = gtk.CellRendererText()
 		column_titles = ["Filename", "Filesize", "Date","Tags"]
 		for title,idx in zip(column_titles,range(len(column_titles))):
@@ -75,6 +79,13 @@ class MainWindow(gtk.Window):
 		box.pack_start(scroll)
 
 		self.add(box)
+
+	def _key_pressed(self,widget, event):
+		selection = widget.get_selection()
+		model, paths = selection.get_selected_rows()
+		#t like tags
+		if event.keyval == 116:
+			TagDialog(paths,self.store)
 
 	def _entry_activate(self, widget):
 		from filter import Query
@@ -100,7 +111,7 @@ class MainWindow(gtk.Window):
 		Add a list of images to the list store.
 		"""
 		for img in lst:
-			tags = " ".join(img.tags)
+			tags = ", ".join(img.tags)
 			filename = img.get_filename()
 			self.store.append((filename, img.size, img.date, tags))
 

@@ -23,4 +23,4 @@ def register_update_listener(listener):
 
 
 def update(string):
-	_res_interface.SparqlUpdate(string)
+	_interface.SparqlUpdate(string)
