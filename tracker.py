@@ -22,3 +22,5 @@ def register_update_listener(listener):
 	_proxy.connect_to_signal('GraphUpdated', listener)
 
 
+def update(string):
+	_res_interface.SparqlUpdate(string)
