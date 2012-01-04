@@ -14,9 +14,8 @@ pygtk.require("2.0")
 import gtk
 
 from image import Image, Images
-from tag import TagDialog
+from tag import SingleImageTagDialog
 import tracker
-
 
 
 # Command to execute when a file is double-clicked in the list view. The
@@ -85,7 +84,8 @@ class MainWindow(gtk.Window):
 		model, paths = selection.get_selected_rows()
 		#t like tags
 		if event.keyval == 116:
-			TagDialog(paths,self.store)
+			if len(paths) == 1:
+				SingleImageTagDialog(paths,self.store)
 
 	def _entry_activate(self, widget):
 		from filter import Query

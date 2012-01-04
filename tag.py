@@ -40,9 +40,9 @@ queries["remove tag from file"] = """DELETE {
 	?as nie:url 'file://%s' .
 }"""
 
-class TagDialog(gtk.Dialog):
+class SingleImageTagDialog(gtk.Dialog):
 	"""
-	Dialog for adding Tags
+	Dialog for adding and removing tags to and from a single photo
 	"""
 
 	def __init__(self,paths,store):
@@ -52,6 +52,8 @@ class TagDialog(gtk.Dialog):
 			(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT, gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
 
 		self.store = store
+
+		self.removing = []
 
 		result = tracker.query(queries["all tags and counts"])
 		all_tags = [(str(x[0]), int(x[1])) for x in result]
@@ -70,14 +72,13 @@ class TagDialog(gtk.Dialog):
 		completion.set_text_column(0)
 		completion.set_inline_selection(True)
 		for tag,freq in all_tags:
-			print tag
 			comp_store.append([tag])
 		self.vbox.pack_start(entry)
 		entry.show()
 
 		for tag in file_tags:
-			button = gtk.Button(label="Remove tag: %s" % tag)
-			button.connect("clicked",lambda b, t=tag,f=filename: self._remove_tag(b,t,f))
+			button = gtk.Button(label="Remove tag %s" % tag)
+			button.connect("clicked",lambda b, t=tag: self._remove_tag(b,t))
 			self.vbox.pack_start(button)
 			button.show()
 
@@ -87,6 +88,7 @@ class TagDialog(gtk.Dialog):
 			new_tags = [x.strip() for x in entry.get_text().split(",")]
 			iter =  self.store.get_iter(paths[0])
 			filename = self.store.get_value(iter,0)
+
 			for tag in new_tags:
 				if tag in file_tags:
 					continue
@@ -94,11 +96,16 @@ class TagDialog(gtk.Dialog):
 					tracker.update(queries["add existing tag"] % (filename,tag))
 				else:
 					tracker.update(queries["add nonexisting tag"] % (tag, filename))
+
+			for tag in self.removing:
+				tracker.update(queries["remove tag from file"] % (tag, filename))
+
 			result = tracker.query(queries["tags for file"] % filename)
 			file_tags = [str(x[0]) for x in result]
 			self.store.set(iter, 3, ", ".join(file_tags))
 		self.destroy()
 
-	def _remove_tag(self,button,label,filename):
-		tracker.update(queries["remove tag from file"] % (label, filename))
+	def _remove_tag(self,button,label):
+		self.removing.append(label)
 		button.hide()
+
