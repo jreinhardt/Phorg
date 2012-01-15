@@ -14,7 +14,7 @@ pygtk.require("2.0")
 import gtk
 
 from image import Image, Images
-from tag import SingleImageTagDialog, TagsDialog
+from tag import ImageTagDialog, TagsDialog
 import tracker
 
 
@@ -63,8 +63,7 @@ class MainWindow(gtk.Window):
 		view.connect("key-press-event", self._key_pressed)
 		view.set_headers_visible(True)
 		view.set_enable_search(False)
-		#The tag dialog is not ready for this:
-		#view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
+		view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
 		renderer = gtk.CellRendererText()
 		column_titles = ["Filename", "Filesize", "Date","Tags"]
 		for title,idx in zip(column_titles,range(len(column_titles))):
@@ -84,8 +83,7 @@ class MainWindow(gtk.Window):
 		model, paths = selection.get_selected_rows()
 		#t like tags
 		if event.keyval == 116:
-			if len(paths) == 1:
-				SingleImageTagDialog(paths,self.store)
+			ImageTagDialog(paths,self.store)
 		#T for Tags Management
 		elif event.keyval == 84:
 			TagsDialog()

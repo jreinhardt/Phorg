@@ -51,7 +51,7 @@ queries["remove tag from file"] = """DELETE {
 	?file nie:url 'file://%s' .
 }"""
 
-class SingleImageTagDialog(gtk.Dialog):
+class ImageTagDialog(gtk.Dialog):
 	"""
 	Dialog for adding and removing tags to and from a single photo
 	"""
@@ -70,11 +70,6 @@ class SingleImageTagDialog(gtk.Dialog):
 		all_tags = [(str(x[1]), int(x[2])) for x in result]
 		all_tags = sorted(all_tags,cmp=lambda x,y: cmp(x[1],y[1]))
 
-		iter =  self.store.get_iter(paths[0])
-		filename = self.store.get_value(iter,0)
-		result = tracker.query(queries["tags for file"] % filename)
-		file_tags = [str(x[0]) for x in result]
-
 		entry = gtk.Entry()
 		completion = gtk.EntryCompletion()
 		entry.set_completion(completion)
@@ -87,33 +82,44 @@ class SingleImageTagDialog(gtk.Dialog):
 		self.vbox.pack_start(entry)
 		entry.show()
 
-		for tag in file_tags:
-			button = gtk.Button(label="Remove tag %s" % tag)
-			button.connect("clicked",lambda b, t=tag: self._remove_tag(b,t))
-			self.vbox.pack_start(button)
-			button.show()
+		if(len(paths) == 1):
+			iter =  self.store.get_iter(paths[0])
+			filename = self.store.get_value(iter,0)
+			result = tracker.query(queries["tags for file"] % filename)
+			file_tags = [str(x[0]) for x in result]
+
+			for tag in file_tags:
+				button = gtk.Button(label="Remove tag %s" % tag)
+				button.connect("clicked",lambda b, t=tag: self._remove_tag(b,t))
+				self.vbox.pack_start(button)
+				button.show()
 
 		response = self.run()
 
 		if response == gtk.RESPONSE_ACCEPT:
-			new_tags = [x.strip() for x in entry.get_text().split(",")]
-			iter =  self.store.get_iter(paths[0])
-			filename = self.store.get_value(iter,0)
-
-			for tag in new_tags:
-				if tag in file_tags:
-					continue
-				if tag in all_tags:
-					tracker.update(queries["add existing tag"] % (filename,tag))
-				else:
-					tracker.update(queries["add nonexisting tag"] % (tag, filename))
-
+			if len(paths) > 1:
+				assert(not bool(self.removing))
 			for tag in self.removing:
 				tracker.update(queries["remove tag from file"] % (tag, filename))
 
-			result = tracker.query(queries["tags for file"] % filename)
-			file_tags = [str(x[0]) for x in result]
-			self.store.set(iter, 3, ", ".join(file_tags))
+			new_tags = [x.strip() for x in entry.get_text().split(",")]
+			for path in paths:
+				iter =  self.store.get_iter(path)
+				filename = self.store.get_value(iter,0)
+				result = tracker.query(queries["tags for file"] % filename)
+				file_tags = [str(x[0]) for x in result]
+
+				for tag in new_tags:
+					if tag in file_tags:
+						continue
+					if tag in all_tags:
+						tracker.update(queries["add existing tag"] % (filename,tag))
+					else:
+						tracker.update(queries["add nonexisting tag"] % (tag, filename))
+
+				result = tracker.query(queries["tags for file"] % filename)
+				file_tags = [str(x[0]) for x in result]
+				self.store.set(iter, 3, ", ".join(file_tags))
 		self.destroy()
 
 	def _remove_tag(self,button,label):
