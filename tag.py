@@ -3,41 +3,52 @@ import tracker
 
 queries = {}
 
-queries["all tags and counts"] = """SELECT ?label COUNT(?x) WHERE {
-	?x a nfo:Image; nao:hasTag ?tag .
-	?tag a nao:Tag; nao:prefLabel ?label .
+queries["all tags and counts"] = """SELECT ?tag ?label COUNT(?im) WHERE {
+	?im a nfo:Image;
+		nao:hasTag ?tag;
+		nie:isStoredAs ?file .
+	?tag a nao:Tag;
+		nao:prefLabel ?label .
 } GROUP BY ?label"""
 
 queries["tags for file"] = """SELECT ?label WHERE {
-	?x nie:url 'file://%s' ; nao:hasTag ?tag .
-	?tag a nao:Tag; nao:prefLabel ?label . 
+	?im a nfo:Image;
+		nao:hasTag ?tag;
+		nie:isStoredAs ?file .
+	?tag a nao:Tag;
+		nao:prefLabel ?label .
+	?file nie:url 'file://%s' .
 }"""
 
 queries["add existing tag"] = """INSERT {
-	?x nao:hasTag ?id
+	?im nao:hasTag ?tag
 } WHERE {
-	?x nie:url 'file://%s' .
-	?id nao:prefLabel '%s' .
+	?im a nfo:Image;
+		nie:isStoredAs ?file .
+	?tag a nao:Tag;
+		nao:prefLabel '%s' .
+	?file nie:url 'file://%s' .
 }"""
 
 queries["add nonexisting tag"] = """INSERT {
 	_:tag a nao:Tag ;
 		nao:prefLabel '%s' .
-	?unknown nao:hasTag _:tag
+	?im nao:hasTag _:tag
 } WHERE {
-	?unknown nie:isStoredAs ?as .
-	?as nie:url 'file://%s' .
+	?im a nfo:Image;
+		nie:isStoredAs ?file .
+	?file nie:url 'file://%s' .
 }"""
 
 queries["remove tag from file"] = """DELETE {
-	?f nao:hasTag ?t
+	?im nao:hasTag ?tag
 } WHERE {
-	?t a nao:Tag ;
+	?tag a nao:Tag ;
 		nao:prefLabel '%s' .
-	?f a nfo:Image;
-		nao:hasTag ?t;
-		nie:isStoredAs ?as .
-	?as nie:url 'file://%s' .
+	?im a nfo:Image;
+		nao:hasTag ?tag;
+		nie:isStoredAs ?file .
+	?file nie:url 'file://%s' .
 }"""
 
 class SingleImageTagDialog(gtk.Dialog):
@@ -56,7 +67,7 @@ class SingleImageTagDialog(gtk.Dialog):
 		self.removing = []
 
 		result = tracker.query(queries["all tags and counts"])
-		all_tags = [(str(x[0]), int(x[1])) for x in result]
+		all_tags = [(str(x[1]), int(x[2])) for x in result]
 		all_tags = sorted(all_tags,cmp=lambda x,y: cmp(x[1],y[1]))
 
 		iter =  self.store.get_iter(paths[0])
