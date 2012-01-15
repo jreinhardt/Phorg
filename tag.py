@@ -82,32 +82,35 @@ class ImageTagDialog(gtk.Dialog):
 		self.vbox.pack_start(entry)
 		entry.show()
 
-		if(len(paths) == 1):
-			iter =  self.store.get_iter(paths[0])
+		common_tags = []
+		for path in paths:
+			iter =  self.store.get_iter(path)
 			filename = self.store.get_value(iter,0)
 			result = tracker.query(queries["tags for file"] % filename)
 			file_tags = [str(x[0]) for x in result]
+			if common_tags:
+				common_tags = [x for x in common_tags if x in file_tags ]
+			else:
+				common_tags = file_tags
 
-			for tag in file_tags:
-				button = gtk.Button(label="Remove tag %s" % tag)
-				button.connect("clicked",lambda b, t=tag: self._remove_tag(b,t))
-				self.vbox.pack_start(button)
-				button.show()
+		for tag in common_tags:
+			button = gtk.Button(label="Remove tag %s" % tag)
+			button.connect("clicked",lambda b, t=tag: self._remove_tag(b,t))
+			self.vbox.pack_start(button)
+			button.show()
 
 		response = self.run()
 
 		if response == gtk.RESPONSE_ACCEPT:
-			if len(paths) > 1:
-				assert(not bool(self.removing))
-			for tag in self.removing:
-				tracker.update(queries["remove tag from file"] % (tag, filename))
-
 			new_tags = [x.strip() for x in entry.get_text().split(",")]
 			for path in paths:
 				iter =  self.store.get_iter(path)
 				filename = self.store.get_value(iter,0)
 				result = tracker.query(queries["tags for file"] % filename)
 				file_tags = [str(x[0]) for x in result]
+
+				for tag in self.removing:
+					tracker.update(queries["remove tag from file"] % (tag, filename))
 
 				for tag in new_tags:
 					if tag in file_tags:
