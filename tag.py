@@ -120,3 +120,43 @@ class SingleImageTagDialog(gtk.Dialog):
 		self.removing.append(label)
 		button.hide()
 
+class TagsDialog(gtk.Dialog):
+	"""
+	Dialog for managing all existing tags
+	"""
+
+	def __init__(self):
+		gtk.Dialog.__init__(self, "Tags",
+			None,
+			gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
+			(gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT, gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
+
+		self.removing = []
+
+		result = tracker.query(queries["all tags and counts"])
+		all_tags = [(str(x[1]), int(x[2])) for x in result]
+		all_tags = sorted(all_tags,cmp=lambda x,y: cmp(x[1],y[1]))
+
+		self.store = gtk.ListStore(str,int)
+		view = gtk.TreeView(self.store)
+		view.set_headers_visible(True)
+		renderer = gtk.CellRendererText()
+		column_titles = ["Tag", "Nr. of Files"]
+		for title,idx in zip(column_titles,range(len(column_titles))):
+			col = gtk.TreeViewColumn(title,renderer,text=idx)
+			col.set_resizable(True)
+			col.set_sort_column_id(idx)
+			view.append_column(col)
+		scroll = gtk.ScrolledWindow()
+		scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+		scroll.add(view)
+		self.vbox.pack_start(scroll)
+
+		for tag, freq in all_tags:
+			self.store.append((tag, freq))
+
+		self.show_all()
+
+		response = self.run()
+
+		self.destroy()

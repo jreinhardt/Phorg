@@ -14,7 +14,7 @@ pygtk.require("2.0")
 import gtk
 
 from image import Image, Images
-from tag import SingleImageTagDialog
+from tag import SingleImageTagDialog, TagsDialog
 import tracker
 
 
@@ -86,6 +86,9 @@ class MainWindow(gtk.Window):
 		if event.keyval == 116:
 			if len(paths) == 1:
 				SingleImageTagDialog(paths,self.store)
+		#T for Tags Management
+		elif event.keyval == 84:
+			TagsDialog()
 
 	def _entry_activate(self, widget):
 		from filter import Query
