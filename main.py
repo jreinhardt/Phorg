@@ -56,11 +56,23 @@ class MainWindow(gtk.Window):
 		filterbar.add(button)
 		box.pack_start(filterbar, expand=False, fill=False)
 
+		#Create image preview
+		previews = gtk.HBox()
+		self.preview_front = gtk.Image()
+		self.preview_front.set_size_request(300,300)
+		previews.pack_start(self.preview_front)
+		self.preview_back = gtk.Image()
+		self.preview_back.set_size_request(300,300)
+		previews.pack_start(self.preview_back)
+		previews.set_size_request(600,300)
+		box.pack_start(previews,False,False)
+
 		# Create view
 		self.store = gtk.ListStore(str, int, str, str)
 		view = gtk.TreeView(self.store)
 		view.connect("row-activated", self._view_row_activated)
 		view.connect("key-press-event", self._key_pressed)
+		view.get_selection().connect("changed", self._row_selected)
 		view.set_headers_visible(True)
 		view.set_enable_search(False)
 		view.get_selection().set_mode(gtk.SELECTION_MULTIPLE)
@@ -70,6 +82,7 @@ class MainWindow(gtk.Window):
 			col = gtk.TreeViewColumn(title,renderer,text=idx)
 			col.set_resizable(True)
 			col.set_sort_column_id(idx)
+			col.set_max_width(300)
 			view.append_column(col)
 		scroll = gtk.ScrolledWindow()
 		scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
@@ -77,6 +90,29 @@ class MainWindow(gtk.Window):
 		box.pack_start(scroll)
 
 		self.add(box)
+
+	def _row_selected(self,selection):
+		model, paths = selection.get_selected_rows()
+		self.preview_front.hide()
+		self.preview_back.hide()
+		if len(paths) == 1:
+			iter = self.store.get_iter(paths[0])
+			filename = self.store.get_value(iter,0)
+			buf = gtk.gdk.pixbuf_new_from_file_at_size(filename,600,300)
+			self.preview_front.set_from_pixbuf(buf)
+			self.preview_front.show()
+		elif len(paths) > 1:
+			iter = self.store.get_iter(paths[0])
+			filename = self.store.get_value(iter,0)
+			buf = gtk.gdk.pixbuf_new_from_file_at_size(filename,300,300)
+			self.preview_front.set_from_pixbuf(buf)
+			self.preview_front.show()
+			iter = self.store.get_iter(paths[-1])
+			filename = self.store.get_value(iter,0)
+			buf = gtk.gdk.pixbuf_new_from_file_at_size(filename,300,300)
+			self.preview_back.set_from_pixbuf(buf)
+			self.preview_back.show()
+			
 
 	def _key_pressed(self,widget, event):
 		selection = widget.get_selection()
